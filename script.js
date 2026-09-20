@@ -12,6 +12,7 @@ const windSpeed = document.getElementById("wind-speed");
 const weatherInfo = document.getElementById("weather-info");
 const errorMessage = document.getElementById("error-message");
 const statusMessage = document.getElementById("status-message");
+const weatherMode = document.getElementById("weather-mode");
 
 searchForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -82,3 +83,20 @@ function showError(message) {
   errorMessage.classList.remove("hidden");
   statusMessage.textContent = "Something needs your attention.";
 }
+
+function showDemoWeather() {
+  cityName.textContent = "Nairobi";
+  temperature.textContent = "23";
+  weatherDescription.textContent = "partly cloudy";
+  feelsLike.textContent = "24°C";
+  humidity.textContent = "61%";
+  windSpeed.textContent = "14 km/h";
+  weatherIcon.src = "https://openweathermap.org/img/wn/03d@2x.png";
+  weatherIcon.alt = "Partly cloudy conditions";
+  weatherIcon.hidden = false;
+  weatherMode.textContent = "DEMO";
+  statusMessage.textContent = "Preview mode · Add a key to enable live city search.";
+  weatherInfo.classList.remove("hidden");
+}
+
+if (!apiKey) showDemoWeather();
