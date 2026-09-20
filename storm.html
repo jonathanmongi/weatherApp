@@ -3,24 +3,70 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weather App</title>
+  <meta name="description" content="A clean weather dashboard for checking current conditions by city.">
+  <title>Atmos — Weather dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <h1>🌤 Weather App</h1>
-    <div class="search">
-      <input type="text" id="city-input" placeholder="Enter city name...">
-      <button id="search-btn">🔍 Search</button>
-    </div>
-    <div id="weather-info" class="hidden">
-      <h2 id="city-name"></h2>
-      <img id="weather-icon" src="" alt="Weather icon" hidden>
-      <p id="temperature"></p>
-      <p id="weather-description"></p>
-    </div>
-    <p id="error-message" class="hidden">City not found. Please try again.</p>
-  </div>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="storm.html" aria-label="Atmos home">
+        <span class="brand-mark">✦</span>
+        <span>atmos</span>
+      </a>
+      <span class="topbar-label">CURRENT CONDITIONS</span>
+    </header>
+
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">YOUR WEATHER, SIMPLIFIED</p>
+        <h1 id="page-title">A clearer view<br><em>of today.</em></h1>
+        <p class="hero-copy">Search any city to see the conditions that matter, presented simply.</p>
+      </div>
+
+      <form class="search" id="search-form">
+        <label class="sr-only" for="city-input">City name</label>
+        <span class="search-icon" aria-hidden="true">⌕</span>
+        <input type="text" id="city-input" placeholder="Search for a city" autocomplete="off" required>
+        <button id="search-btn" type="submit">Search <span aria-hidden="true">→</span></button>
+      </form>
+      <p id="status-message" class="status-message" role="status">Try a city like London, Nairobi, or Tokyo.</p>
+    </section>
+
+    <section id="weather-info" class="weather-panel hidden" aria-live="polite">
+      <div class="weather-heading">
+        <div>
+          <p class="eyebrow">RIGHT NOW IN</p>
+          <h2 id="city-name">—</h2>
+        </div>
+        <span class="live-pill"><span></span> LIVE</span>
+      </div>
+
+      <div class="weather-main">
+        <div class="temperature-block">
+          <span id="temperature" class="temperature">—</span>
+          <span class="unit">°C</span>
+        </div>
+        <div class="condition-block">
+          <img id="weather-icon" src="" alt="" hidden>
+          <p id="weather-description">—</p>
+        </div>
+      </div>
+
+      <div class="insight-grid">
+        <div class="insight-card"><span class="insight-label">FEELS LIKE</span><strong id="feels-like">—</strong></div>
+        <div class="insight-card"><span class="insight-label">HUMIDITY</span><strong id="humidity">—</strong></div>
+        <div class="insight-card"><span class="insight-label">WIND</span><strong id="wind-speed">—</strong></div>
+      </div>
+    </section>
+
+    <p id="error-message" class="error-message hidden" role="alert">Something went wrong. Please try again.</p>
+
+    <footer class="footer"><span>BUILT FOR EVERYDAY EXPLORERS</span><span class="footer-line"></span><span>OPENWEATHER DATA</span></footer>
+  </main>
   <script src="config.js"></script>
   <script src="script.js"></script>
 </body>
