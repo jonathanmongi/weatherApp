@@ -1,4 +1,3 @@
-const apiKey = window.WEATHER_API_KEY || "";
 const searchForm = document.getElementById("search-form");
 const cityInput = document.getElementById("city-input");
 const searchBtn = document.getElementById("search-btn");
@@ -14,6 +13,30 @@ const errorMessage = document.getElementById("error-message");
 const statusMessage = document.getElementById("status-message");
 const weatherMode = document.getElementById("weather-mode");
 
+const weatherCodes = {
+  0: ["Clear sky", "Clear", "☀️"],
+  1: ["Mainly clear", "Clear", "🌤️"],
+  2: ["Partly cloudy", "Clouds", "⛅"],
+  3: ["Overcast", "Clouds", "☁️"],
+  45: ["Foggy", "Clouds", "🌫️"],
+  48: ["Rime fog", "Clouds", "🌫️"],
+  51: ["Light drizzle", "Rain", "🌦️"],
+  53: ["Drizzle", "Rain", "🌦️"],
+  55: ["Heavy drizzle", "Rain", "🌧️"],
+  61: ["Light rain", "Rain", "🌦️"],
+  63: ["Rain", "Rain", "🌧️"],
+  65: ["Heavy rain", "Rain", "🌧️"],
+  71: ["Light snow", "Snow", "🌨️"],
+  73: ["Snow", "Snow", "❄️"],
+  75: ["Heavy snow", "Snow", "❄️"],
+  80: ["Rain showers", "Rain", "🌦️"],
+  81: ["Rain showers", "Rain", "🌧️"],
+  82: ["Heavy showers", "Rain", "🌧️"],
+  95: ["Thunderstorm", "Thunderstorm", "⛈️"],
+  96: ["Thunderstorm with hail", "Thunderstorm", "⛈️"],
+  99: ["Thunderstorm with hail", "Thunderstorm", "⛈️"],
+};
+
 searchForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const city = cityInput.value.trim();
@@ -21,37 +44,26 @@ searchForm.addEventListener("submit", (event) => {
 });
 
 async function fetchWeather(city) {
-  if (!apiKey) {
-    showError("Add your OpenWeatherMap key to config.js before searching.");
-    return;
-  }
-
   setLoading(true);
   try {
-    const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`
+    const locationResponse = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`
     );
-    const data = await response.json();
+    if (!locationResponse.ok) throw new Error("Location lookup failed");
+    const locationData = await locationResponse.json();
+    const location = locationData.results?.[0];
 
-    if (!response.ok || data.cod !== 200) {
+    if (!location) {
       showError("We couldn't find that city. Check the spelling and try again.");
       return;
     }
 
-    cityName.textContent = data.name;
-    temperature.textContent = Math.round(data.main.temp);
-    weatherDescription.textContent = data.weather[0].description;
-    feelsLike.textContent = `${Math.round(data.main.feels_like)}°C`;
-    humidity.textContent = `${data.main.humidity}%`;
-    windSpeed.textContent = `${Math.round(data.wind.speed * 3.6)} km/h`;
-    weatherIcon.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
-    weatherIcon.alt = data.weather[0].description;
-    weatherIcon.hidden = false;
-
-    weatherInfo.classList.remove("hidden");
-    errorMessage.classList.add("hidden");
-    statusMessage.textContent = "Updated just now · Search another city anytime.";
-    changeBackground(data.weather[0].main);
+    const weatherResponse = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${location.latitude}&longitude=${location.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&temperature_unit=celsius&wind_speed_unit=kmh&timezone=auto`
+    );
+    if (!weatherResponse.ok) throw new Error("Weather lookup failed");
+    const weatherData = await weatherResponse.json();
+    renderWeather(location, weatherData.current);
   } catch (error) {
     console.error("Error fetching weather data:", error);
     showError("The weather service is unavailable right now. Please try again.");
@@ -60,10 +72,33 @@ async function fetchWeather(city) {
   }
 }
 
+function renderWeather(location, current) {
+  const [description, background, emoji] = weatherCodes[current.weather_code] || ["Current conditions", "Clear", "🌤️"];
+  cityName.textContent = location.country ? `${location.name}, ${location.country_code}` : location.name;
+  temperature.textContent = Math.round(current.temperature_2m);
+  weatherDescription.textContent = description;
+  feelsLike.textContent = `${Math.round(current.apparent_temperature)}°C`;
+  humidity.textContent = `${current.relative_humidity_2m}%`;
+  windSpeed.textContent = `${Math.round(current.wind_speed_10m)} km/h`;
+  weatherIcon.src = createWeatherIcon(emoji);
+  weatherIcon.alt = description;
+  weatherIcon.hidden = false;
+  weatherMode.textContent = "LIVE";
+  weatherInfo.classList.remove("hidden");
+  errorMessage.classList.add("hidden");
+  statusMessage.textContent = "Updated just now · Search another city anytime.";
+  changeBackground(background);
+}
+
+function createWeatherIcon(emoji) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="72" text-anchor="middle" font-size="68">${emoji}</text></svg>`;
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
 function setLoading(isLoading) {
   searchBtn.disabled = isLoading;
   searchBtn.innerHTML = isLoading ? "Loading…" : 'Search <span aria-hidden="true">→</span>';
-  statusMessage.textContent = isLoading ? "Reading the sky…" : statusMessage.textContent;
+  if (isLoading) statusMessage.textContent = "Reading the sky…";
 }
 
 function changeBackground(weatherCondition) {
@@ -85,18 +120,17 @@ function showError(message) {
 }
 
 function showDemoWeather() {
-  cityName.textContent = "Nairobi";
-  temperature.textContent = "23";
-  weatherDescription.textContent = "partly cloudy";
-  feelsLike.textContent = "24°C";
-  humidity.textContent = "61%";
-  windSpeed.textContent = "14 km/h";
-  weatherIcon.src = "https://openweathermap.org/img/wn/03d@2x.png";
-  weatherIcon.alt = "Partly cloudy conditions";
-  weatherIcon.hidden = false;
+  const location = { name: "Nairobi", country_code: "KE" };
+  const current = {
+    temperature_2m: 23,
+    apparent_temperature: 24,
+    relative_humidity_2m: 61,
+    wind_speed_10m: 14,
+    weather_code: 2,
+  };
+  renderWeather(location, current);
   weatherMode.textContent = "DEMO";
-  statusMessage.textContent = "Preview mode · Add a key to enable live city search.";
-  weatherInfo.classList.remove("hidden");
+  statusMessage.textContent = "Preview mode · Search any city for live conditions.";
 }
 
-if (!apiKey) showDemoWeather();
+showDemoWeather();

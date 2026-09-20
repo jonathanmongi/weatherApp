@@ -1,12 +1,12 @@
 # Contributor onboarding guide
 
-This guide explains how to run, understand, and safely change the **Weather App**. The project is a small static frontend: the browser loads one HTML page, applies one stylesheet, and executes one JavaScript file that calls the OpenWeatherMap API.
+This guide explains how to run, understand, and safely change the **Weather App**. The project is a small static frontend: the browser loads one HTML page, applies one stylesheet, and executes one JavaScript file that calls the Open-Meteo geocoding and forecast APIs.
 
 ## Before you start
 
 You need Git, a modern web browser, and a local HTTP server. No Node.js installation, package manager, dependency installation, or build step is currently required.
 
-The app also needs an OpenWeatherMap API key. The current implementation contains a key directly in `script.js`, which is visible to every browser user. Treat that key as exposed: do not copy it into new documentation, and plan to rotate it and move it behind a server-side proxy before making the app public.
+The public app does not require an API key. It resolves a city with Open-Meteo's geocoding endpoint and then requests current conditions from its forecast endpoint. This makes the static GitHub Pages deployment usable without storing credentials in the repository.
 
 ## Set up a local copy
 
@@ -45,7 +45,7 @@ There is no `package.json`, lockfile, test runner, bundler, or generated output.
 
 `storm.html` is the entry point. It defines the search input and button, the hidden weather-results panel, the weather icon, and the error message. The IDs in this file are part of the JavaScript contract. If an ID changes, update the corresponding selector in `script.js` in the same change.
 
-`script.js` obtains references to those elements and registers two interactions. Clicking **Search** trims the input and calls `fetchWeather`; pressing **Enter** triggers the same button action. `fetchWeather` requests the OpenWeatherMap current-weather endpoint with metric units. A successful response updates the page and calls `changeBackground` with the returned weather condition. A failed request or non-success response calls `showError`.
+`script.js` obtains references to those elements and registers the search form. Submitting the form trims the input, resolves the city, and requests current weather in metric units. A successful response updates the page and calls `changeBackground` with the mapped WMO weather condition. A failed request or missing location calls `showError`. When the page first loads, it shows a clearly labeled demo state until a search is performed.
 
 `changeBackground` maps broad conditions such as `Clear`, `Clouds`, `Rain`, `Snow`, and `Thunderstorm` to CSS gradients. `style.css` supplies the centered layout, search controls, weather card, icon sizing, typography, hover effects, and the `.hidden` utility class used to switch result and error states.
 
@@ -98,14 +98,15 @@ Open a pull request on GitHub with a summary of the user-visible change, the man
 
 ## Current limitations to know about
 
-The API key is currently embedded in client-side JavaScript. This is not a secure production arrangement because users can inspect the page and reuse the key. A production-ready change should use a server-side endpoint, restrict the key in the OpenWeatherMap account, and provide a safe configuration path.
+The public weather service is intentionally keyless for this static project. If the app later adds a provider that requires credentials, do not place those credentials in browser JavaScript. Use a server-side endpoint and document the configuration path separately.
 
 The app has no automated tests, loading state, request cancellation, rate-limit handling, or detailed error categorization. These are reasonable areas for future contributions. If you add any build tooling or runtime dependency, update this guide and add the relevant manifest and lockfile so a new contributor can reproduce the setup.
 
 ## References
 
-[1]: https://openweathermap.org/current "OpenWeatherMap Current Weather Data API"
-[2]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API "MDN Fetch API documentation"
-[3]: https://docs.python.org/3/library/http.server.html "Python http.server documentation"
+[1]: https://open-meteo.com/en/docs/geocoding-api "Open-Meteo Geocoding API documentation"
+[2]: https://open-meteo.com/en/docs "Open-Meteo Weather Forecast API documentation"
+[3]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API "MDN Fetch API documentation"
+[4]: https://docs.python.org/3/library/http.server.html "Python http.server documentation"
 
-The API behavior described above follows the [OpenWeatherMap current weather API][1]. Browser requests use the standard [`fetch` API][2], and the local setup example uses Python's built-in [`http.server` module][3].
+The location and forecast behavior described above follows the [Open-Meteo Geocoding API][1] and [Forecast API][2]. Browser requests use the standard [`fetch` API][3], and the local setup example uses Python's built-in [`http.server` module][4].
