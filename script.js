@@ -1,4 +1,4 @@
-const apiKey = "924567a9debaf81635511b152d054606"; // Your OpenWeatherMap API key
+const apiKey = window.WEATHER_API_KEY || "";
 const cityInput = document.getElementById("city-input");
 const searchBtn = document.getElementById("search-btn");
 const cityName = document.getElementById("city-name");
@@ -8,78 +8,62 @@ const weatherDescription = document.getElementById("weather-description");
 const weatherInfo = document.getElementById("weather-info");
 const errorMessage = document.getElementById("error-message");
 
-// Function to fetch weather
 async function fetchWeather(city) {
+  if (!apiKey) {
+    showError("Add your OpenWeatherMap API key to config.js before searching.");
+    return;
+  }
+
   try {
     const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`
+      `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`
     );
     const data = await response.json();
 
-    if (data.cod === 200) {
-      cityName.textContent = data.name;
-      temperature.textContent = `🌡 Temperature: ${data.main.temp}°C`;
-      weatherDescription.textContent = `🌍 Weather: ${data.weather[0].description}`;
-      weatherIcon.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
-
-      // Show weather info
-      weatherInfo.classList.remove("hidden");
-      errorMessage.classList.add("hidden");
-
-      // Change background based on weather
-      changeBackground(data.weather[0].main);
-    } else {
-      showError();
+    if (!response.ok || data.cod !== 200) {
+      showError("City not found. Please try again.");
+      return;
     }
+
+    cityName.textContent = data.name;
+    temperature.textContent = `Temperature: ${data.main.temp}°C`;
+    weatherDescription.textContent = `Weather: ${data.weather[0].description}`;
+    weatherIcon.src = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
+    weatherIcon.hidden = false;
+
+    weatherInfo.classList.remove("hidden");
+    errorMessage.classList.add("hidden");
+    changeBackground(data.weather[0].main);
   } catch (error) {
     console.error("Error fetching weather data:", error);
-    showError();
+    showError("Unable to reach the weather service. Please try again.");
   }
 }
 
-// Function to change background dynamically
 function changeBackground(weatherCondition) {
-  let bg;
-  switch (weatherCondition) {
-    case "Clear":
-      bg = "linear-gradient(135deg, #ff9a9e, #fad0c4)";
-      break;
-    case "Clouds":
-      bg = "linear-gradient(135deg, #757F9A, #D7DDE8)";
-      break;
-    case "Rain":
-      bg = "linear-gradient(135deg, #005C97, #363795)";
-      break;
-    case "Snow":
-      bg = "linear-gradient(135deg, #E0EAFC, #CFDEF3)";
-      break;
-    case "Thunderstorm":
-      bg = "linear-gradient(135deg, #2C3E50, #4CA1AF)";
-      break;
-    default:
-      bg = "linear-gradient(135deg, #ff9a9e, #fad0c4)";
-  }
-  document.body.style.background = bg;
+  const backgrounds = {
+    Clear: "linear-gradient(135deg, #ff9a9e, #fad0c4)",
+    Clouds: "linear-gradient(135deg, #757F9A, #D7DDE8)",
+    Rain: "linear-gradient(135deg, #005C97, #363795)",
+    Snow: "linear-gradient(135deg, #E0EAFC, #CFDEF3)",
+    Thunderstorm: "linear-gradient(135deg, #2C3E50, #4CA1AF)",
+  };
+
+  document.body.style.background =
+    backgrounds[weatherCondition] || backgrounds.Clear;
 }
 
-// Function to show error
-function showError() {
+function showError(message) {
   weatherInfo.classList.add("hidden");
+  errorMessage.textContent = message;
   errorMessage.classList.remove("hidden");
 }
 
-// Event listeners
 searchBtn.addEventListener("click", () => {
   const city = cityInput.value.trim();
-  if (city) {
-    fetchWeather(city);
-  }
+  if (city) fetchWeather(city);
 });
 
-// Search on "Enter" key press
-cityInput.addEventListener("keypress", (event) => {
-  if (event.key === "Enter") {
-    searchBtn.click();
-  }
+cityInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") searchBtn.click();
 });
-
