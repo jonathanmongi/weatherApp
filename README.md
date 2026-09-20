@@ -2,6 +2,8 @@
 
 A small browser-based weather dashboard. Search for a city to retrieve its current temperature, description, icon, and a matching background from the OpenWeatherMap API.
 
+**Live site:** <https://jonathanmongi.github.io/weatherApp/>
+
 ## Run locally
 
 1. Copy the configuration template:
